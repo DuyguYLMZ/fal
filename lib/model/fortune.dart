@@ -8,13 +8,13 @@ class Fortune {
   final String image;
 
   const Fortune(
-      {this.id,
-      this.name,
-      this.location,
-      this.distance,
-      this.gravity,
-      this.description,
-      this.image});
+      {required this.id,
+      required this.name,
+      required this.location,
+      required this.distance,
+      required this.gravity,
+      required this.description,
+      required this.image});
 }
 
 /*

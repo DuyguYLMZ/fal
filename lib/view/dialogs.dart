@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-Future<bool> alertSuccessDialog(BuildContext _context) {
+alertSuccessDialog(BuildContext _context) {
   return showDialog(
       context: _context,
       builder: (BuildContext context) {
@@ -59,16 +59,35 @@ showLoading(BuildContext context) async {
       });
 }
 
-Future<bool> alertMissingImageDialog(BuildContext context) {
+ alertMissingImageDialog(BuildContext context) {
   return showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Done'),
-          content: Text('Eksik'),
+          title: Text('Eksik Görüntü'),
+          content: Text('Lütfen 3 görüntü ekleyin '),
           actions: <Widget>[
             TextButton(
-              child: Text('Ok'),
+              child: Text('Tamam'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      });
+}
+
+alertMissingFieldDialog(BuildContext context) {
+  return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Eksik bilgi'),
+          content: Text('Lütfen bilgilerinizi kontrol edin, boş alan kalmadığından emin olun.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Tamam'),
               onPressed: () {
                 Navigator.pop(context);
               },

@@ -1,4 +1,4 @@
-class User {
+class UserPhoneInfo {
   final String id;
   final String name;
   final String phoneId;
@@ -7,12 +7,13 @@ class User {
   final String description;
   final String image;
 
-  const User(
-      {this.id,
-        this.name,
-        this.phoneId,
-        this.location,
-        this.distance,
-        this.description,
-        this.image});
+
+  const UserPhoneInfo(
+      {required this.id,
+        required this.name,
+        required this.phoneId,
+        required this.location,
+        required this.distance,
+        required this.description,
+        required this.image});
 }

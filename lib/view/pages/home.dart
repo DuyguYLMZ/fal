@@ -8,11 +8,11 @@ import 'package:example/view/pages/settings.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'fortunelist.dart';
 import 'fortuneview.dart';
 import 'newfotune.dart';
 
 class Home extends StatefulWidget {
+  static String id = 'home';
   @override
   State<StatefulWidget> createState() {
     return _HomeState();
@@ -47,18 +47,19 @@ class _HomeState extends State<Home> {
         width: MediaQuery.of(context).size.width,
         child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                alignment: Alignment.center,
-                height: MediaQuery.of(context).size.height -
-                    (MediaQuery.of(context).size.height / 8),
-                child: showPage(),
+              Expanded(
+                child: Container(
+                  alignment: Alignment.center,
+                  height: MediaQuery.of(context).size.height -
+                      (MediaQuery.of(context).size.height / 8),
+                  child: showPage(),
+                ),
               ),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
-                  height: MediaQuery.of(context).size.height / 8,
                   width: MediaQuery.of(context).size.width,
                   color: Colors.transparent,
                   padding: EdgeInsets.only(top: 4),
@@ -85,14 +86,8 @@ class _HomeState extends State<Home> {
       return ProfileTabWidget();
     } else if (_currentTab == TabItem.newFortune) {
       return NewFortuneTabWidget();
-    }/* else if (_currentTab == TabItem.settings) {
-      *//*  Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => SettingsTabWidget()),
-      );*//*
-      return SettingsTabWidget();
-    } */else {
-      return  FortuneViewPage();
+    } else {
+      return FortuneViewPage();
     }
   }
 }

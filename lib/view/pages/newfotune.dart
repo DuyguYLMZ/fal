@@ -7,12 +7,16 @@ import 'package:example/util/cameraPreview.dart';
 import 'package:example/values/theme.dart';
 import 'package:example/view/dialogs.dart';
 import 'package:example/view/loadingOverlay.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+
+import '../../util/deviceInfo.dart';
+import '../bottomsheet.dart';
 
 class NewFortuneTabWidget extends StatefulWidget {
   @override
@@ -23,14 +27,16 @@ class NewFortuneTabWidget extends StatefulWidget {
 
 class NewFortuneTabState extends State<NewFortuneTabWidget>
     with AutomaticKeepAliveClientMixin {
-  List<CameraDescription> cameras;
-  CameraController _controller;
+  late List<CameraDescription> cameras;
+  late CameraController _controller;
   bool _isInited = false;
-  var _provider;
-  FirebaseStorage storage = FirebaseStorage.instance;
+  late FortunePathProvider _provider;
+  late Future<List<String>> _deviceList;
+  final FirebaseAuth auth = FirebaseAuth.instance;
 
   @override
   void initState() {
+    _provider = FortunePathProvider();
     super.initState();
     _setupCameras();
   }
@@ -73,61 +79,64 @@ class NewFortuneTabState extends State<NewFortuneTabWidget>
 
   @override
   Widget build(BuildContext context) {
-    this._provider = Provider.of<FortunePathProvider>(context, listen: false);
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        padding: EdgeInsets.all(10),
-        height: MediaQuery.of(context).size.height,
-        width: MediaQuery.of(context).size.width,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              child: Row(
+    return ChangeNotifierProvider<FortunePathProvider>.value(
+        value: _provider,
+        child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Container(
+              padding: EdgeInsets.all(10),
+              height: MediaQuery.of(context).size.height,
+              width: MediaQuery.of(context).size.width,
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _fortuneBtn(context, _provider, 1),
-                  _fortuneBtn(context, _provider, 2),
-                  _fortuneBtn(context, _provider, 3),
+                  Container(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _fortuneBtn(context, _provider, 1),
+                        _fortuneBtn(context, _provider, 2),
+                        _fortuneBtn(context, _provider, 3),
+                      ],
+                    ),
+                  ),
+                  Center(
+                    child: Container(
+                      width: MediaQuery.of(context).size.width / 2,
+                      child: TextButton(
+                        style: ButtonStyle(
+                            backgroundColor:
+                                MaterialStateProperty.all(lightpink),
+                            shape: MaterialStateProperty.all<
+                                    RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18.0),
+                                    side: BorderSide(
+                                        color: Colors.transparent)))),
+                        onPressed: () async {
+                          bottomSheet(context);
+                          //await uploadImageToFirebase(context);
+                        },
+                        child: const Text(
+                          'Gönder',
+                          style: TextStyle(color: white),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
-            Center(
-              child: Container(
-                width: MediaQuery.of(context).size.width / 2,
-                child: TextButton(
-                  style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all(lightpink),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18.0),
-                              side: BorderSide(color: Colors.white)))),
-                  onPressed: () async {
-                    uploadImageToFirebase(context);
-                  },
-                  child: const Text(
-                    'send',
-                    style: TextStyle(color: white),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+            )));
   }
 
   @override
   bool get wantKeepAlive => true;
 
-  Widget _fortuneBtn(
-      BuildContext context, FortunePathProvider provider, int id) {
+  Widget _fortuneBtn(BuildContext context, FortunePathProvider data, int id) {
     return Flexible(
       child: Container(
         decoration: BoxDecoration(
@@ -137,11 +146,11 @@ class NewFortuneTabState extends State<NewFortuneTabWidget>
         width: MediaQuery.of(context).size.width / 3,
         height: MediaQuery.of(context).size.height / 3,
         child: IconButton(
-          icon: (_provider.fortunePath(id).toString().isNotEmpty)
-              ? Image.file(File(_provider.fortunePath(id)))
+          icon: (data.fortunePath(id).toString().isNotEmpty)
+              ? Image.file(File(_provider.fortunePath(id)!))
               : const Icon(
                   Icons.add,
-                  color: Colors.cardBlueValue,
+                  color: Colors.teal,
                 ),
           iconSize: MediaQuery.of(context).size.width / 6,
           onPressed: () {
@@ -152,7 +161,7 @@ class NewFortuneTabState extends State<NewFortuneTabWidget>
     );
   }
 
-  Widget _buildPopupDialog(BuildContext context, int id) {
+  _buildPopupDialog(BuildContext context, int id) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -172,8 +181,8 @@ class NewFortuneTabState extends State<NewFortuneTabWidget>
                       padding: EdgeInsets.all(10),
                       child: Align(
                           alignment: Alignment.topLeft,
-                          child: const Text('Kahveeee',
-                              style: TextStyle(color: white)))),
+                          child:
+                              const Text('', style: TextStyle(color: white)))),
                   CamerePreview(_isInited, _controller, context),
                   Align(
                     alignment: Alignment.bottomRight,
@@ -186,7 +195,7 @@ class NewFortuneTabState extends State<NewFortuneTabWidget>
                         });
                       },
                       child: const Text(
-                        'ok',
+                        'Tamam',
                         style: TextStyle(color: white),
                       ),
                     ),
@@ -206,10 +215,18 @@ class NewFortuneTabState extends State<NewFortuneTabWidget>
       alertMissingImageDialog(context);
     } else {
       overlay.show();
+      _deviceList = DeviceInfo.getDeviceDetails();
+      var list = await _deviceList;
+
       String firebaseDataName = 'fortunes/' +
-          _provider.getUserPhoneId().toString() +
-          '_' +
+          DateTime.now().toString() +
+          "_" +
+          auth.currentUser!.email.toString() +
+          "_" +
+          list[2].toString() +
+          '/' +
           DateTime.now().toString();
+
       for (int i = 0; i < 3; i++) {
         fileName = basename(File(imagePathList[i]).path);
         Reference ref = FirebaseStorage.instance
@@ -217,6 +234,7 @@ class NewFortuneTabState extends State<NewFortuneTabWidget>
             .child(firebaseDataName + '/$fileName');
         TaskSnapshot snapshot = await ref.putFile(File(imagePathList[i]));
         if (snapshot.state == TaskState.success && i == 2) {
+          _saveFortune(context);
           overlay.showAlertSucces(context);
           if (_provider.imagePaths() != null &&
               _provider.imagePaths().length > 0 &&
@@ -225,6 +243,40 @@ class NewFortuneTabState extends State<NewFortuneTabWidget>
           }
         }
       }
+    }
+  }
+
+  Future _saveFortune(BuildContext context) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('fortune')
+        .doc(auth.currentUser!.email)
+        .collection('1')
+        .get();
+
+    List val = querySnapshot.docs.map((doc) => doc.data()).toList();
+    if (val == null || val.length <= 0) {
+      await FirebaseFirestore.instance
+          .collection('fortune')
+          .doc(auth.currentUser!.email)
+          .collection('1')
+          .doc("1")
+          .set({
+        'title': "Yorumlanıyor",
+        'fortune': null,
+        'date': DateTime.now(),
+      });
+    } else {
+      String value = (querySnapshot.docs.length + 1).toString();
+      await FirebaseFirestore.instance
+          .collection('fortune')
+          .doc(auth.currentUser!.email)
+          .collection('1')
+          .doc(value)
+          .set({
+        'title': "Yorumlanıyor",
+        'fortune': null,
+        'date': DateTime.now(),
+      });
     }
   }
 }

@@ -1,31 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:example/controller/FortunePathProvider.dart';
+import 'package:example/values/theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import 'package:example/model/user.dart';
+import '../../controller/FortunePathProvider.dart';
+import '../../model/user.dart';
+import '../../util/fortune_card.dart';
+import '../../util/deviceInfo.dart';
 
 class FortuneViewPage extends StatefulWidget {
-  FortuneViewPage({Key key}) : super(key: key);
+  FortuneViewPage();
 
   @override
   _FortuneViewPageState createState() => _FortuneViewPageState();
@@ -38,302 +28,149 @@ extension contexsize on BuildContext {
 }
 
 class _FortuneViewPageState extends State<FortuneViewPage> {
-  FirebaseAuth auth = FirebaseAuth.instance;
-
-  // FirebaseFirestore firestore = FirebaseFirestore.instance;
-  final firestore = FirebaseFirestore.instance;
+  var firestore;
   List asset = [];
-  VideoPlayerController controller;
-//  var _provider;
+  late List<UserPhoneInfo> userList;
+  final FirebaseAuth auth = FirebaseAuth.instance;
+  var docSnapshot;
+  var fortune;
+  var _listLength;
+  var _fortuneText;
+  var _title;
+  var _date;
+  List<Map<String, String>> jsonData = [];
+
+  Widget _body = CircularProgressIndicator();
 
   @override
   void initState() {
+    getData();
     super.initState();
-    firestore.collection("Posts").get().then((QuerySnapshot querySnapshot) => {
-          querySnapshot.docs.forEach((doc) {
-            if (doc.data().toString().contains("video")) {
-              Map<dynamic, dynamic> xx = doc.data();
-              asset.add(xx["video"]);
-            }
-          })
-        });
+  }
+
+  Widget _emptyScreen() {
+    Size size = MediaQuery.of(context).size;
+    return  RefreshIndicator(
+      onRefresh: _pullRefresh,
+      child: Container(
+        height: size.height,
+        width: size.width,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/purple_logo.png',
+                  width: size.width / 2,
+                ),
+                Text(
+                  "Falınız yok",
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ],),
+        ),
+      ),
+    );
+  }
+
+  Future getData() async {
+    fortune = FirebaseFirestore.instance.collection("fortune");
+    docSnapshot = await fortune.doc(auth.currentUser!.email).get();
+    jsonData = [];
+    // Get data from docs and convert map to List
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('fortune')
+        .doc(auth.currentUser!.email)
+        .collection('1')
+        .get();
+    List val = querySnapshot.docs.map((doc) => doc.data()).toList();
+    for (var v in val) {
+      Map<String, dynamic> testMap = v as Map<String, dynamic>;
+      for (var w in testMap.entries) {
+        if("title" ==w.key.toString()){
+            _title= w.value.toString();
+        }
+        else if("fortune" == w.key.toString()){
+          _fortuneText = w.value.toString();
+        }
+        else if("date" == w.key.toString()){
+          DateTime dateTime = DateTime.parse(w.value.toDate().toString());
+          _date = (DateFormat('dd-MMM-yyy').format(dateTime));
+        }
+
+      }
+      Map<String, String> mapWord = {
+        "date": _date,
+        "fortune": _fortuneText,
+        "title": _title
+      };
+      jsonData.add(mapWord);
+    }
+
+
+    _listLength = querySnapshot.docs.length;
+
+    if(_listLength != null && _listLength>0){
+      setState(() => _body = _build());
+    } else{
+      setState(() => _body = _emptyScreen());
+    }
   }
 
   @override
   void dispose() {
-    controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: firestore
-            .collection('Posts')
-            .get(),
-        builder: (BuildContext context, AsyncSnapshot<dynamic> postssnapshot) {
-          if (postssnapshot.hasData) {
-            if (postssnapshot.connectionState == ConnectionState.done) {
-              return PageView.builder(
-                  itemCount: postssnapshot.data.docs.length,
-                  scrollDirection: Axis.vertical,
-                  itemBuilder: (context, index) {
-                    controller = VideoPlayerController.network(asset[index]);
-                    controller.initialize().then((_) {
-                      controller.play();
-                    });
-                    controller.setLooping(true);
-                    var videopost = postssnapshot.data.docs[index];
-                    return Stack(children: [
-                      Center(
-                        child: Container(
-                          child: AspectRatio(
-                            aspectRatio: controller.value.aspectRatio,
-                            child:  FittedBox(
-                                fit: BoxFit.cover,
-                                alignment: Alignment.center,
-                                child: Container(
-                                    width: 100,
-                                    height: 200,
-                                    child: VideoPlayer(controller)))
-                          ),
-                        ),
-                      ),
-                       Container(
-                          height: 100,
-                          width: 100,
-                          child: SafeArea(
-                              child: Padding(
-                                  padding: EdgeInsets.only(
-                                      right: context.dynamicwidth(0.03),
-                                      left: context.dynamicwidth(0.03),
-                                      bottom: context.dynamicheight(0.02)),
-                                  child: Column(children: <Widget>[
-                                    Row(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          TextButton(
-                                              onPressed: () {},
-                                              child: Text(
-                                                  'Takip',
-
-                                              )),
-                                          SizedBox(
-                                              width:
-                                              context.dynamicwidth(0.025)),
-                                          Text(
-                                              '|'
-                                          ),
-                                          SizedBox(
-                                              width:
-                                              context.dynamicwidth(0.025)),
-                                          TextButton(
-                                              onPressed: () {},
-                                              child: Text(
-                                                  'Ã–nerilen',
-
-                                              )),
-                                        ]),
-                                    Flexible(
-                                        child: Row(
-                                            crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                            children: [
-                                              Container(
-                                                  height: 100,
-                                                  width: context.dynamicwidth(
-                                                      0.8),
-                                                  child: Column(
-                                                      mainAxisAlignment:
-                                                      MainAxisAlignment.end,
-                                                      crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                      children: [
-                                                        Row(children: [
-                                                          CircleAvatar(
-                                                              backgroundImage: NetworkImage(
-                                                                  'https://firebasestorage.googleapis.com/v0/b/tahminlecarrylexstudio.appspot.com/o/Profileimages%2Fimage.jpg?alt=media&token=5e8541a0-de42-45cb-992d-9e7f1e13d227',
-                                                                  scale: context
-                                                                      .dynamicwidth(
-                                                                      0.1))),
-                                                          SizedBox(
-                                                              width: context
-                                                                  .dynamicwidth(
-                                                                  0.01)),
-                                                          Text(
-                                                              'Username' /* ,
-                                                             style: methodtextstyle(
-                                                                              FontWeight
-                                                                                  .w700,
-                                                                              16,
-                                                                              Colors
-                                                                                  .white)*/
-                                                          ),
-                                                          SizedBox(
-                                                              width: context
-                                                                  .dynamicwidth(
-                                                                  0.01)),
-                                                          Text(
-                                                              'Â·'
-                                                          ),
-                                                          SizedBox(
-                                                              width: context
-                                                                  .dynamicwidth(
-                                                                  0.01)),
-                                                          Text(
-                                                              'Status'
-                                                          ),
-                                                        ]),
-                                                        SizedBox(
-                                                            height: context
-                                                                .dynamicheight(
-                                                                0.01)),
-                                                       /* Text(
-                                                          videopost['text'],
-                                                        ),*/
-                                                        SizedBox(
-                                                            height: context
-                                                                .dynamicheight(
-                                                                0.01)),
-                                                        Text(
-                                                          'Time',
-                                                        )
-                                                      ])),
-                                              Expanded(
-                                                  child: Container(
-                                                      height: 100,
-                                                      child: Column(children: [
-                                                        Container(
-                                                          height: context
-                                                              .dynamicheight(
-                                                              0.4),
-                                                        ),
-                                                        Expanded(
-                                                            child: Container(
-                                                                child: Column(
-                                                                    mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .end,
-                                                                    children: [
-                                                                      InkWell(
-                                                                          onTap: () {},
-                                                                          child: Column(
-                                                                              children: [
-
-                                                                                SizedBox(
-                                                                                    height:
-                                                                                    context
-                                                                                        .dynamicheight(
-                                                                                        0.01)),
-                                                                                Text(
-                                                                                  '17K',
-                                                                                )
-                                                                              ])),
-                                                                      SizedBox(
-                                                                          height: context
-                                                                              .dynamicheight(
-                                                                              0.02)),
-                                                                      InkWell(
-                                                                          onTap: () {},
-                                                                          child: Column(
-                                                                              children: [
-                                                                                SizedBox(
-                                                                                    height:
-                                                                                    context
-                                                                                        .dynamicheight(
-                                                                                        0.01)),
-
-                                                                              ])),
-                                                                      SizedBox(
-                                                                          height: context
-                                                                              .dynamicheight(
-                                                                              0.02)),
-                                                                      InkWell(
-                                                                        onTap: () {
-
-                                                                        },
-
-                                                                      )
-                                                                    ])))
-                                                      ])))
-                                            ]))
-                                  ])))),
-                    ]);
-                  });
-            }
-          }
-          return SizedBox();
-        });
-  }
-}
-/*  final firestoreInstance = FirebaseFirestore.instance;
-  final textcontroller = TextEditingController();
-  var dbRef;
-  var _provider;
-
-  @override
-  void initState() {
-    super.initState();
+    return _body;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    this._provider = Provider.of<FortunePathProvider>(context, listen: false);
-    String text = "eee";
-    // CollectionReference document = firestoreInstance.collection("time");
-    CollectionReference document = firestoreInstance.collection('Raffles');
-
+  Widget _build() {
     return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: cardBlue,
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
           title: Text(
-            "Demo",
+            "Fallar",
             style: TextStyle(color: Colors.white),
           ),
         ),
-        body: StreamBuilder(
-          stream: document
-              .doc('88123423')
-              .collection('Deposits')
-              .doc('varOlmayanUser_teswwt')
-              .snapshots(),
-          builder: (BuildContext context,
-              AsyncSnapshot<dynamic> raffleusersnapshot) {
-            if (!raffleusersnapshot.hasData) {
-              return Container(
-                child: Center(
-                  child:
-                  CircularProgressIndicator(backgroundColor: Colors.pink),
-                ),
-              );
-            } else {
-              if (!raffleusersnapshot.data.exists) {
-                document.doc('88123423').collection('Deposits').doc(
-                    'varOlmayanUser_tewwst').set({
-                  "tcoin": 0,
-                });
-              } else {
-                return Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width,
-                  height: MediaQuery
-                      .of(context)
-                      .size
-                      .height,
-                  child: Text("${raffleusersnapshot.data['tcoin']}"),
+        body: RefreshIndicator(
+          onRefresh: _pullRefresh,
+          child: StreamBuilder(
+              stream: fortune.snapshots(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else {
+                  return ListView.builder(
+                    itemCount: _listLength,
+                    padding: const EdgeInsets.only(left: 12, right: 12),
+                    scrollDirection: Axis.vertical,
+                    itemBuilder: (BuildContext context, int index) {
+                      return FortuneItem(
+                          date: jsonData[index]["date"],
+                          title:  jsonData[index]["title"],
+                          fortune:  jsonData[index]["fortune"],
+                          isTouchable: true,
+                          isSelected: false);
+                    },
+                  );
+                }
+              }),
+        ));
+  }
 
-                );
-              }
-              return Container(
-                child: Center(
-                  child:
-                  CircularProgressIndicator(backgroundColor: Colors.blue),
-                ),
-              );
-            }
-          },));
-  }*/
+  Future<void> _pullRefresh() async {
+    setState(() {
+      getData();
+    });
+  }
+}

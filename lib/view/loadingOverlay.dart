@@ -24,8 +24,8 @@ class LoadingOverlay {
         context: _context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Done'),
-            content: Text('Add Success'),
+            title: Text('Gönderildi'),
+            content: Text('Fallınız gönderildi'),
             actions: <Widget>[
               TextButton(
                 child: Text('Ok'),

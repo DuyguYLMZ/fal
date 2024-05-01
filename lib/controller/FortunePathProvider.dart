@@ -5,11 +5,11 @@ import 'package:example/model/user.dart';
 import 'package:flutter/cupertino.dart';
 
 class FortunePathProvider extends ChangeNotifier {
-  int _videoIndex;
+  late int _videoIndex;
 
-  String _imagePath;
-  List<User> userList;
-  List<Fortune> fortuneList;
+  late String _imagePath;
+  late List<UserPhoneInfo> userList;
+  late List<Fortune> fortuneList;
   Map<int, String> fortuneImageMap = {1: '', 2: '', 3: ''};
   List widgets = <Widget>[];
 
@@ -38,17 +38,17 @@ class FortunePathProvider extends ChangeNotifier {
     this.fortuneImageMap = {1: '', 2: '', 3: ''};
   }
 
-  String fortunePath(int btnId) => fortuneImageMap[btnId];
+  String? fortunePath(int btnId) => fortuneImageMap[btnId];
 
-  List imagePaths() {
+  List<String> imagePaths() {
     List<String> imagePathList = [];
-    imagePathList.add(fortuneImageMap[1]);
-    imagePathList.add(fortuneImageMap[2]);
-    imagePathList.add(fortuneImageMap[3]);
+    imagePathList.add(fortuneImageMap[1]!);
+    imagePathList.add(fortuneImageMap[2]!);
+    imagePathList.add(fortuneImageMap[3]!);
     return imagePathList;
   }
 
-  void setNewUser(User user) {
+  void setNewUser(UserPhoneInfo user) {
     if (this.userList == null) {
       this.userList = [];
     }
@@ -73,11 +73,12 @@ class FortunePathProvider extends ChangeNotifier {
 
   List<Fortune> getFortuneList() => this.fortuneList ==null ? [] : this.fortuneList;
 
-  User getUser(User userId) {
+  UserPhoneInfo getUser(UserPhoneInfo userId) {
     for (var user in userList) {
       if (user.phoneId == userId) {
         return user;
       }
     }
+    return UserPhoneInfo(id: "0", name: "name", phoneId: "phoneId", location: "location", distance: "distance", description: "description", image: "image");
   }
 }

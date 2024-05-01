@@ -10,23 +10,23 @@ class TabNavigatorRoutes {
 }
 
 class TabNavigator extends StatelessWidget {
-  TabNavigator({this.navigatorKey, this.tabItem});
+  TabNavigator({required this.navigatorKey, required this.tabItem});
   final GlobalKey<NavigatorState> navigatorKey;
   final TabItem tabItem;
 
-  void _push(BuildContext context, {int materialIndex: 500}) {
+  void _push(BuildContext context, {int materialIndex = 500}) {
     var routeBuilders = _routeBuilders(context, materialIndex: materialIndex);
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => routeBuilders[TabNavigatorRoutes.detail](context),
+        builder: (context) => routeBuilders[TabNavigatorRoutes.detail]!(context),
       ),
     );
   }
 
   Map<String, WidgetBuilder> _routeBuilders(BuildContext context,
-      {int materialIndex: 500}) {
+      {int materialIndex = 500}) {
     return {
       TabNavigatorRoutes.root: (context) => ColorsListPage(
         color: white,
@@ -50,7 +50,7 @@ class TabNavigator extends StatelessWidget {
       initialRoute: TabNavigatorRoutes.root,
       onGenerateRoute: (routeSettings) {
         return MaterialPageRoute(
-          builder: (context) => routeBuilders[routeSettings.name](context),
+          builder: (context) => routeBuilders[routeSettings.name]!(context),
         );
       },
     );
@@ -58,9 +58,9 @@ class TabNavigator extends StatelessWidget {
 }
 
 class ColorsListPage extends StatelessWidget {
-  ColorsListPage({this.color, this.title, this.onPush});
-  final MaterialColor color;
-  final String title;
+  ColorsListPage({required this.color, required this.title, required this.onPush});
+  final Color color;
+  final String? title;
   final ValueChanged<int> onPush;
 
   @override
@@ -68,7 +68,7 @@ class ColorsListPage extends StatelessWidget {
     return Scaffold(
         appBar: AppBar(
           title: Text(
-            title,
+            title!,
           ),
           backgroundColor: color,
         ),
@@ -86,7 +86,7 @@ class ColorsListPage extends StatelessWidget {
         itemBuilder: (BuildContext content, int index) {
           int materialIndex = materialIndices[index];
           return Container(
-            color: color[materialIndex],
+            color: color,
             child: ListTile(
               title: Text('$materialIndex', style: TextStyle(fontSize: 24.0)),
               trailing: Icon(Icons.chevron_right),
@@ -99,9 +99,9 @@ class ColorsListPage extends StatelessWidget {
 
 
 class ColorDetailPage extends StatelessWidget {
-  ColorDetailPage({this.color, this.title, this.materialIndex: 500});
-  final MaterialColor color;
-  final String title;
+  ColorDetailPage({required this.color, required this.title, this.materialIndex = 500});
+  final Color? color;
+  final String? title;
   final int materialIndex;
 
   @override
@@ -115,7 +115,7 @@ class ColorDetailPage extends StatelessWidget {
       ),
       body: Container(
         child: Text("helloo"),
-        color: color[materialIndex],
+        color: color,
       ),
     );
   }

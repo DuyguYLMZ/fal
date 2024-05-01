@@ -29,13 +29,13 @@ class PlanetRow extends StatelessWidget {
     final headerTextStyle = baseTextStyle.copyWith(
         color: Colors.white, fontSize: 18.0, fontWeight: FontWeight.w600);
 
-    Widget _planetValue({String value, String image}) {
+  /*  Widget _planetValue({String value, String image}) {
       return new Row(children: <Widget>[
        new Image.asset(image, height: 12.0),
         new Container(width: 8.0),
         new Text(fortune.gravity, style: regularTextStyle),
       ]);
-    }
+    }*/
 
     final planetCardContent = new Container(
       margin: new EdgeInsets.fromLTRB(0, 16.0, 16.0, 16.0),
